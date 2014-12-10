@@ -1,0 +1,224 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>test</groupId>
+	<artifactId>test.getentry</artifactId>
+	<version>0.1.1-SNAPSHOT</version>
+	<packaging>bundle</packaging>
+
+	<properties>
+		<mbp.version>2.5.3</mbp.version>
+		<scr.version>1.20.0</scr.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.scr.ds-annotations</artifactId>
+			<version>1.2.8</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>5.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>5.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+		</plugins>
+	</build>
+	<profiles>
+		<profile>
+			<id>in-eclipse-mbp</id>
+			<!-- activated only when running in m2e (eclipse) for bundle projects -->
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<properties>
+				<osgi-version-qualifier>qualifier</osgi-version-qualifier>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>maven-scr-plugin</artifactId>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>maven-bundle-plugin</artifactId>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+					</plugin>
+				</plugins>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>org.apache.felix</groupId>
+							<artifactId>maven-bundle-plugin</artifactId>
+							<version>${mbp.version}</version>
+							<extensions>true</extensions>
+							<configuration>
+								<obrRepository>NONE</obrRepository>
+								<unpackBundle>true</unpackBundle>
+								<manifestLocation>${basedir}/META-INF</manifestLocation>
+								<instructions>
+									<Bundle-Vendor>Lunifera.org</Bundle-Vendor>
+									<Bundle-Name>${project.name}</Bundle-Name>
+									<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+									<!-- <Bundle-Version>0.1.1</Bundle-Version> -->
+									<Bundle-ActivationPolicy>lazy</Bundle-ActivationPolicy>
+									<_snapshot>${osgi-version-qualifier}</_snapshot>
+									<Bundle-RequiredExecutionEnvironment>JavaSE-1.7</Bundle-RequiredExecutionEnvironment>
+									<!-- <Include-Resource>{maven-resources},META-INF/LICENSE=LICENSE.txt</Include-Resource> -->
+								</instructions>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.felix</groupId>
+							<artifactId>maven-scr-plugin</artifactId>
+							<version>${scr.version}</version>
+							<executions>
+								<execution>
+									<id>generate-scr-scrdescriptor</id>
+									<goals>
+										<goal>scr</goal>
+									</goals>
+								</execution>
+							</executions>
+						</plugin>
+						<plugin>
+							<groupId>org.eclipse.m2e</groupId>
+							<artifactId>lifecycle-mapping</artifactId>
+							<version>1.0.0</version>
+							<configuration>
+								<lifecycleMappingMetadata>
+									<pluginExecutions>
+										<pluginExecution>
+											<pluginExecutionFilter>
+												<groupId>org.apache.maven.plugins</groupId>
+												<artifactId>maven-antrun-plugin</artifactId>
+												<versionRange>[1.0,)</versionRange>
+												<goals>
+													<goal>run</goal>
+												</goals>
+											</pluginExecutionFilter>
+											<action>
+												<execute>
+													<runOnIncremental>false</runOnIncremental>
+													<runOnConfiguration>true</runOnConfiguration>
+												</execute>
+											</action>
+										</pluginExecution>
+									</pluginExecutions>
+								</lifecycleMappingMetadata>
+							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-antrun-plugin</artifactId>
+							<version>1.7</version>
+							<executions>
+								<execution>
+									<id>delete-osgi-inf</id>
+									<phase>validate</phase>
+									<goals>
+										<goal>run</goal>
+									</goals>
+									<configuration>
+										<target>
+											<taskdef resource="net/sf/antcontrib/antlib.xml" />
+											<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+											<if>
+												<available file="${basedir}/OSGI-INF" type="dir" />
+												<then>
+													<delete dir="${basedir}/OSGI-INF" quiet="true" />
+												</then>
+											</if>
+										</target>
+									</configuration>
+								</execution>
+								<execution>
+									<id>copy-osgi-inf</id>
+									<phase>package</phase>
+									<goals>
+										<goal>run</goal>
+									</goals>
+									<configuration>
+										<target>
+											<taskdef resource="net/sf/antcontrib/antlib.xml" />
+											<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+											<if>
+												<available file="${project.build.outputDirectory}/OSGI-INF"
+													type="dir" />
+												<then>
+													<echo message="Copying OSGI-INF..." level="info" />
+													<mkdir dir="${basedir}/OSGI-INF" />
+													<copy todir="${basedir}/OSGI-INF">
+														<fileset dir="${project.build.outputDirectory}/OSGI-INF" />
+													</copy>
+												</then>
+											</if>
+										</target>
+									</configuration>
+								</execution>
+								<execution>
+									<id>copy-meta-inf</id>
+									<phase>package</phase>
+									<goals>
+										<goal>run</goal>
+									</goals>
+									<configuration>
+										<target>
+											<taskdef resource="net/sf/antcontrib/antlib.xml" />
+											<taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+											<if>
+												<available file="${basedir}/META-INF/MANIFEST.MF"
+													type="file" />
+												<then>
+													<echo message="Copying META-INF/MANIFEST.MF..." level="info" />
+													<mkdir dir="${project.build.outputDirectory}/META-INF" />
+													<copy file="${basedir}/META-INF/MANIFEST.MF" todir="${project.build.outputDirectory}/META-INF"
+														overwrite="true" />
+												</then>
+											</if>
+										</target>
+									</configuration>
+								</execution>
+							</executions>
+							<dependencies>
+								<dependency>
+									<groupId>org.apache.ant</groupId>
+									<artifactId>ant</artifactId>
+									<version>1.8.4</version>
+								</dependency>
+								<dependency>
+									<groupId>ant-contrib</groupId>
+									<artifactId>ant-contrib</artifactId>
+									<version>1.0b3</version>
+									<exclusions>
+										<exclusion>
+											<groupId>ant</groupId>
+											<artifactId>ant</artifactId>
+										</exclusion>
+									</exclusions>
+								</dependency>
+							</dependencies>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+	</profiles>
+</project>
